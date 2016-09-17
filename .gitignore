@@ -1,0 +1,7 @@
+corpus*
+raw.en*
+*.pyc
+index*
+.*.swp
+.*.swo
+*.bak
