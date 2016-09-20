@@ -25,10 +25,12 @@ if __name__ == "__main__":
 		flag = 0
 		lis = content[i].split()
 		if rank == int(lis[4]):
+
+			if lis[1] == 'f':
+				print "failure in node " + str(rank) + " , aborting..."
+				comm.Abort()
 			if i + 1 < past + 2 + num_queries:
 				lis1 = content[i + 1].split()
-				if lis[1] == 'f':
-					comm.Abort(errorcode = 420)
 				# if debitting and userid and timestamp are same.
 				if lis[1] == 'd' and lis1[0] == lis[0] and lis1[3] == lis[3]:
 					val = int(lis[2]) + int(lis1[2])
@@ -72,7 +74,7 @@ if __name__ == "__main__":
 			print "commiting at node :" ,rank 
 			if message[1] == 'd':
 				bank[message[0]] -= int(message[2])	
-			if message[0] == 'c':
+			if message[1] == 'c':
 				bank[message[0]] += int(message[2])
 			print str(bank[message[0]])			
 		else:
