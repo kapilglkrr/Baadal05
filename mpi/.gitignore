@@ -5,3 +5,5 @@ index*
 .*.swp
 .*.swo
 *.bak
+*.tar.gz
+small_dataset*
