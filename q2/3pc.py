@@ -43,7 +43,6 @@ if __name__ == "__main__":
 		bank[lis[0]] = int(lis[1])
 
 	num_queries = int(content[past + 1])
-	print "num_queries = " + str(num_queries)
 	i = past + 2
 	# loop all future queries
 	while i < past + 2 + num_queries:
@@ -135,8 +134,6 @@ if __name__ == "__main__":
 
 		if message[3] == 0: i = i + 1
 		else: i = i + 2
-
-	print "program khatam " + str(rank)
 
 	print bank,
 	print " " + str(rank)
