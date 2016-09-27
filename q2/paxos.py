@@ -19,7 +19,7 @@ if __name__ == '__main__':
 		val = 100
 		comm.send(val, dest = leader)
 
-	#1-5: RM; 6-10 Acceptors; fail = 2
+	#0: leader; 1-10: RM; no_fail_tolerable = 4
 	#size = 11
 	lis = []
 
@@ -29,7 +29,8 @@ if __name__ == '__main__':
 	if rank == leader:
 		val = comm.recv(source = 1)
 
-		for j in range(1, 6):
+		#prepare
+		for j in range(1, size):	#RMs
 			lis = []
 			lis.append(val)
 			bal = max(balhistory) + 1
@@ -38,38 +39,42 @@ if __name__ == '__main__':
 			comm.send(lis, dest = j)		
 
 
-	if rank in range(1, 6):
-		lis = comm.recv(source = leader)
-		balhistory.append(lis[1])
-		for j in range(6, 11):
-			comm.send(lis, dest = j)
-
 	#acceptor
-	if rank in range(6, 11):
-		for j in range(1, 6):
-			opinions[j] = comm.recv(source = j)
-			balhistory.append(opinions[j][1])
-			
-		set(balhistory)
+	if rank in range(1, size):
+		lis = comm.recv(source = leader)
 		var = True
-		for j in range(1, 6):
-			if opinions[j][1] >= max(balhistory):
-				var = var and opinions[j][0]
+		if lis[1] >= max(balhistory):
+			balhistory.append(lis[1])
+			var = var and lis[0]
 
 		comm.send(var, dest = leader)
 
 	if rank == leader:
+		#check majority opinion of RMs
 		count = 0
-		for j in range(6, 11):
+		for j in range(1, size):
 			var = comm.recv(source = j)
 			if var:
 				count = count + 1
 
-		if count > no_acceptors/2:
-			for j in range(1, 6):
+		#if majority, then commit
+		if count > (size-1)/2:
+			#send commit to RMs
+			for j in range(1, size):
 				comm.send(True, dest = j)
 
-	if rank in range(1, 6):
+			#leader commits
+			print "Committing at node " + str(rank)
+
+		#else, abort
+		else:
+			for j in range(1, size):
+				comm.send(False, dest = j)
+
+			print "Aborting at node ", rank
+
+	#receive commit/abort from leader
+	if rank in range(1, size):
 		commit = comm.recv(source = leader)
 		if commit:
 			print "Committing at node " + str(rank)
