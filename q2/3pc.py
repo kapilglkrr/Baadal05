@@ -120,8 +120,8 @@ if __name__ == "__main__":
 		count = get_status(lis, 1)
 		
 		# stage 1 end
-		print message,
-		print str(i) + ' ' + str(rank)
+		#print message,
+		#print str(i) + ' ' + str(rank)
 		# TM fails...
 		if int(message[4]) == 2:
 			alive.remove(leader)
