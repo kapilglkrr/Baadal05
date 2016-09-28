@@ -1,7 +1,7 @@
 from mpi4py import MPI
 import os
 import sys
-
+import time
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -9,7 +9,8 @@ size = comm.Get_size()
 bank = {}
 message = []
 
-# userid, debit/depo/view, amount, time, node_num, failure stage
+# userid, debit/depo/view, amount, time, node_num, 
+# failure stage, failed node no, restart stage, restart node no. 
 if __name__ == "__main__":
 	with open(sys.argv[1]) as f:
 		content = f.readlines()
@@ -25,6 +26,11 @@ if __name__ == "__main__":
 	while i < past + 2 + num_queries:
 		flag = 0
 		lis = content[i].split()
+
+		# stage 1.
+		#TM or RM restarts before card insertion
+		if int(lis[8]) == rank and int(lis[7]) == 1:
+			time.sleep(1)
 		if rank == int(lis[4]):
 
 			if lis[1] == 'f':
@@ -33,7 +39,12 @@ if __name__ == "__main__":
 			if i + 1 < past + 2 + num_queries:
 				lis1 = content[i + 1].split()
 				# if debitting and userid and timestamp are same.
+<<<<<<< HEAD
 				if lis[1] == 'd' and lis1[1] == 'd' and lis1[0] == lis[0] and lis1[3] == lis[3]:
+=======
+				if lis[1] == 'd' and lis1[0] == lis[0]\
+						 and lis1[3] == lis[3]:
+>>>>>>> 0736662677ea92a867ca3d2be491a9d90c625631
 					val = int(lis[2]) + int(lis1[2])
 					flag = 1
 					if val <= bank[lis[0]]:
@@ -57,6 +68,8 @@ if __name__ == "__main__":
 			message.append(lis[1])
 			message.append(data)
 			message.append(flag)
+
+
 			comm.send(message, dest = 0)
 		
 		# prepare TM		
@@ -64,10 +77,17 @@ if __name__ == "__main__":
 			message = comm.recv(source=MPI.ANY_SOURCE)
 			if message[1] == 'v':
 				print "balance of user " + message[0] + " " + str(bank[message[0]])
-		
+		# stage 2 restart.
+		if int(lis[8]) == rank and int(lis[7]) == 2:
+			time.sleep(1)
+
 		# TM prepares other RMs.
 		message = comm.bcast(message, root = 0)
  
+		# stage 3 restart.
+		if int(lis[8]) == rank and int(lis[7]) == 3:
+			time.sleep(1)
+
 		# all RM's tell TM agree/disagree.
 		count = 1
 		if message[1] != 'v' and message[2] == 0:
@@ -83,6 +103,10 @@ if __name__ == "__main__":
 					count = count + 1
 				else:
 					count = 0
+
+		# stage 4 restart.
+		if int(lis[8]) == rank and int(lis[7]) == 4:
+			time.sleep(1)
 
 		# TM shares no. of agree-ing RM's with all RM's
 		a = comm.bcast(count, root = 0)
