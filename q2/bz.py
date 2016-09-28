@@ -39,7 +39,8 @@ if __name__ == "__main__":
 	i = past + 2
 	# loop all future queries
 	while i < past + 2 + num_queries:
-		
+		barrier = 0
+		barrier = comm.bcast(barrier, root = 0)
 		M = [None] * size
 		M[rank] = bool(random.getrandbits(1))
 		val = 0
@@ -51,27 +52,17 @@ if __name__ == "__main__":
 		if lis[1] == 'f':
 			if rank == int(lis[4]):
 				print "failure in node " + str(rank) + " , aborting..."
+				exit()
 			if len(alive) <= can_fail + 1:
 				print "greater than F nodes failed"
 				comm.Abort()
 			alive.remove(int(lis[4]))
-			if message[3] == 0: i = i + 10	#manya
-			else: i = i + 2
+			i = i + 1
+			print "rank = " + str(rank) + " continuing..."
 			continue
 
 		if rank == int(lis[4]):
 
-			#failure before card insertion
-			if lis[1] == 'f':
-				print "failure in node " + str(rank) + " , aborting..."
-				if len(alive) <= can_fail:
-					print "greater than F nodes failed"
-					comm.Abort()
-				alive.remove(int(lis[4]))
-				if message[3] == 0: i = i + 10	#manya
-				else: i = i + 2
-				continue
-				#comm.Abort()	# WHY???
 			if i + 1 < past + 2 + num_queries:
 				lis1 = content[i + 1].split()
 				# if debitting and userid and timestamp are same.
@@ -99,12 +90,25 @@ if __name__ == "__main__":
 			message.append(lis[1])
 			message.append(data)
 			message.append(flag)
+		print 'i = ' + str(i) + ' rank = ' + str(rank)
+		print lis
+		alive.sort()
+		print alive,
+		print rank
 
-		for z in range(0, size):
-			val = comm.bcast(M[z], root = z)
-			if z != rank:
-				M[z] = val
+		for z in range(0, len(alive)):
+			print M[alive[z]]
+			val = comm.bcast(M[alive[z]], root = alive[z])
+			print 'broadcast ho gaya ' + str(alive[z]) + 'i = ' + str(i)
+			print 'val = ' + str(val)
+			if alive[z] != rank:
+				M[alive[z]] = val
+				print 'z = ' + str(alive[z])
+				print M,
+				print rank
 
+		print 'i = ' + str(i) + ' first broadcast ' + str(rank)
+		print lis
 		if rank in traitor:
 			M = [1] * 10
 
@@ -112,20 +116,21 @@ if __name__ == "__main__":
 			message.append(M)
 		
 		message = comm.bcast(message, root = int(lis[4]))
+		print 'i = ' + str(i) + ' second broadcast ' + str(rank)
 		message[-1] = M
 
-		for l in range(1, len(traitor)):
-			for x in range(0, size):
+		for l in traitor:
+			for x in alive:
 				
 				# general i, recv msgs from others
 				if rank == x:
-					for j in range(0, size):
+					for j in alive:
 						if rank == j: continue
 						lis2 = comm.recv(source = j)
 						opinion[j] = lis2[-1]
 					
 					
-					for k in range(0, size):
+					for k in alive:
 						yes = 0
 						no = 0
 						for opinions in opinion.values():
@@ -141,13 +146,13 @@ if __name__ == "__main__":
 				else:
 					if rank in traitor:
 						M = []
-						for a in range(0, size):
+						for a in alive:
 							M.append(bool(random.getrandbits(1)))
 						message[-1] = M
 					comm.send(message, dest = x)
 		yes = 0
 		no = 0
-		for z in range(0, size):
+		for z in alive:
 			if M[z]:
 				yes = yes + 1
 			else:
@@ -166,13 +171,14 @@ if __name__ == "__main__":
 		yes = msg[0]
 		no = msg[1]
 		if yes > no:
-			print "commiting at node :" ,rank 			
+			print "commiting at node, rank =" + str(rank) + ' i = ' + str(i) 			
 			if message[1] == 'd':
 				bank[message[0]] -= int(message[2])	
 			if message[1] == 'c':
 				bank[message[0]] += int(message[2])
 		else:
-			print "Aborting at node ",rank
+			print "Aborting at node, rank =" + str(rank) + ' i = ' + str(i)
+
 
 		if message[3] == 0: i = i + 1
 		else: i = i + 2
