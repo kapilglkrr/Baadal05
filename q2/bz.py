@@ -1,6 +1,7 @@
 from mpi4py import MPI
 import os
 import sys
+import time
 import random
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -14,7 +15,7 @@ M[rank] = bool(random.getrandbits(1))
 val = 0
 traitor = []
 content = []
-can_fail = int((size - 1) / 2)
+can_fail = int((size - 1) / 3)
 alive = range(0, size)
 # userid, debit/depo/view, amount, time, node_num, failure stage
 if __name__ == "__main__":
@@ -39,8 +40,7 @@ if __name__ == "__main__":
 	i = past + 2
 	# loop all future queries
 	while i < past + 2 + num_queries:
-		barrier = 0
-		barrier = comm.bcast(barrier, root = 0)
+		opinion = {}
 		M = [None] * size
 		M[rank] = bool(random.getrandbits(1))
 		val = 0
@@ -53,12 +53,11 @@ if __name__ == "__main__":
 			if rank == int(lis[4]):
 				print "failure in node " + str(rank) + " , aborting..."
 				exit()
-			if len(alive) <= can_fail + 1:
-				print "greater than F nodes failed"
+			if len(alive) < size - can_fail:
+				print "greater than" + str(can_fail) + " nodes failed. Exiting gracefully :)"
 				comm.Abort()
 			alive.remove(int(lis[4]))
 			i = i + 1
-			print "rank = " + str(rank) + " continuing..."
 			continue
 
 		if rank == int(lis[4]):
@@ -90,45 +89,55 @@ if __name__ == "__main__":
 			message.append(lis[1])
 			message.append(data)
 			message.append(flag)
-		print 'i = ' + str(i) + ' rank = ' + str(rank)
-		print lis
+
+		#stage1 restart.
+		if int(lis[8]) == rank and int(lis[7]) == 1:
+			print 'node number ' + str(rank) + ' restarting...'
+			time.sleep(1)
 		alive.sort()
-		print alive,
-		print rank
+		for z in alive:
+			if rank == z:
+				for var in alive:
+					if var == z: continue
+					comm.send(M[z], dest = var)
+			else:
+				val = comm.recv(source = z)
 
-		for z in range(0, len(alive)):
-			print M[alive[z]]
-			val = comm.bcast(M[alive[z]], root = alive[z])
-			print 'broadcast ho gaya ' + str(alive[z]) + 'i = ' + str(i)
-			print 'val = ' + str(val)
-			if alive[z] != rank:
-				M[alive[z]] = val
-				print 'z = ' + str(alive[z])
-				print M,
-				print rank
+			#val = comm.bcast(M[z], root = z)
+			if z != rank:
+				M[z] = val
 
-		print 'i = ' + str(i) + ' first broadcast ' + str(rank)
-		print lis
 		if rank in traitor:
-			M = [1] * 10
-
+			M = [True] * size
 		if rank == int(lis[4]):	
 			message.append(M)
 		
 		message = comm.bcast(message, root = int(lis[4]))
-		print 'i = ' + str(i) + ' second broadcast ' + str(rank)
 		message[-1] = M
 
-		for l in traitor:
+
+		for l in range(0, len(traitor)):
+			#stage l restart.
+			if int(lis[8]) == rank and int(lis[7]) == l + 2:
+				print 'node number ' + str(rank) + ' restarting...'
+				time.sleep(1)
+
+			if int(lis[5]) == l + 2:
+				if len(alive) < size - can_fail:
+					print "greater than " + str(can_fail) + " nodes failed. Exiting gracefully :)"
+					comm.Abort()
+				if int(lis[6]) == rank:
+					print 'node number ' + str(rank) + ' failing...'
+					exit()
+				alive.remove(int(lis[6]))
 			for x in alive:
 				
-				# general i, recv msgs from others
+				# general x, recv msgs from others
 				if rank == x:
 					for j in alive:
 						if rank == j: continue
 						lis2 = comm.recv(source = j)
 						opinion[j] = lis2[-1]
-					
 					
 					for k in alive:
 						yes = 0
@@ -146,7 +155,7 @@ if __name__ == "__main__":
 				else:
 					if rank in traitor:
 						M = []
-						for a in alive:
+						for a in range(0,size):
 							M.append(bool(random.getrandbits(1)))
 						message[-1] = M
 					comm.send(message, dest = x)
@@ -171,14 +180,13 @@ if __name__ == "__main__":
 		yes = msg[0]
 		no = msg[1]
 		if yes > no:
-			print "commiting at node, rank =" + str(rank) + ' i = ' + str(i) 			
+			print "commiting at node, rank = " + str(rank) 			
 			if message[1] == 'd':
 				bank[message[0]] -= int(message[2])	
 			if message[1] == 'c':
 				bank[message[0]] += int(message[2])
 		else:
-			print "Aborting at node, rank =" + str(rank) + ' i = ' + str(i)
-
+			print "Aborting at node, rank = " + str(rank)
 
 		if message[3] == 0: i = i + 1
 		else: i = i + 2

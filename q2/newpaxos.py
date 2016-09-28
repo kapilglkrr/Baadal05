@@ -1,19 +1,17 @@
 from mpi4py import MPI
 import os
 import sys
+import time
 import random
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
-
-
-leader = 0
 val = False
 balhistory = [-1]
 bank = {}
 message = []
 alive = range(0, size)
-
+leader = 0
 def leader_failure():
 	global leader, size, alive, rank
 	if rank == leader:
@@ -28,6 +26,11 @@ def node_failure(node_num):
 		exit()
 	else:
 		alive.remove(node_num)
+
+def node_restart(node_num):
+	global rank
+	if node_num == rank:
+		time.sleep(1)
 
 def prepared(var):
 	global alive, rank, leader
@@ -76,6 +79,11 @@ if __name__ == "__main__":
 
 		# stage 1.
 		#leader fails before card insertion
+
+		if lis[1] == 'f':
+			print "Cluster failure. Aborting..."
+			comm.Abort()
+			
 		
 		if int(lis[5]) == 1 :
 			if int(lis[6]) == leader:
@@ -83,11 +91,12 @@ if __name__ == "__main__":
 			else:
 				node_failure(int(lis[6]))
 
+		if int(lis[7]) == 1 :
+			node_restart(int(lis[8]))
+		
+
 		if rank == int(lis[4]):
 
-			if lis[1] == 'f' and rank == leader:
-				print "failure in node " + str(rank) + " not allowed, aborting..."
-				comm.Abort()
 			if i + 1 < past + 2 + num_queries:
 				lis1 = content[i + 1].split()
 				# if debitting and userid and timestamp are same.
@@ -139,7 +148,8 @@ if __name__ == "__main__":
 					message = comm.recv(source = int(lis[4]))
 			else:
 				node_failure(int(lis[6]))
-
+		if int(lis[7]) == 2 :
+			node_restart(int(lis[8]))
 
 		if rank == leader:
 			lis2 = []
@@ -175,7 +185,8 @@ if __name__ == "__main__":
 			else:
 				node_failure(int(lis[6]))
 
-			
+		if int(lis[7]) == 3 :
+			node_restart(int(lis[8]))
 		# stage4 failure.
 		commit = prepared(var)
 
@@ -186,6 +197,8 @@ if __name__ == "__main__":
 			else:
 				node_failure(int(lis[6]))
 
+		if int(lis[7]) == 4 :
+			node_restart(int(lis[8]))
 		if rank == leader:
 			#send commit to RMs
 			for j in alive:

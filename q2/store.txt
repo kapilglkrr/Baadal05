@@ -3,11 +3,13 @@ asdf 300 -5
 nitesh 320 -3
 kapil 100 -9
 nilay 1000 -11
-7
+9
 asdf d 100 1 1 0 1 0 0
 asdf d 400 1 2 0 1 0 0
 nitesh d 100 2 2 0 1 0 0
 nilay c 100 2 1 0 1 0 0
 nilay v 12 12 1 0 1 0 0
 nilay d 5000 13 2 0 1 0 0
-nitesh d 100 14 2 2 0 2 0
+nitesh d 100 14 2 2 3 0 0
+nitesh f 12 15 0 0 0 0 0
+nitesh c 100 16 0 0 0 0 0

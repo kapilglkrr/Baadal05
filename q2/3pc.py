@@ -22,9 +22,9 @@ def get_status(lis, restart):
 		comm.send(count, dest = leader)
 
 	if rank == leader:
-		for j in range(0, len(alive)):
-			if alive[j] == leader: continue
-			x = comm.recv(source = alive[j])
+		for j in alive:
+			if j == leader: continue
+			x = comm.recv(source = j)
 			
 			if x == 1:
 				count = count + 1
