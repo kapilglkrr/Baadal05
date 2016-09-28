@@ -14,6 +14,8 @@ M[rank] = bool(random.getrandbits(1))
 val = 0
 traitor = []
 content = []
+can_fail = int((size - 1) / 2)
+alive = range(0, size)
 # userid, debit/depo/view, amount, time, node_num, failure stage
 if __name__ == "__main__":
 
@@ -23,6 +25,7 @@ if __name__ == "__main__":
 	for lines in content:
 		traitor.append(int(lines))
 
+	#read store.txt
 	with open(sys.argv[1]) as f:
 		content = f.readlines()
 
@@ -43,16 +46,36 @@ if __name__ == "__main__":
 
 		flag = 0
 		lis = content[i].split()
-		#print rank
+
+		#failure before card insertion
+		if lis[1] == 'f':
+			if rank == int(lis[4]):
+				print "failure in node " + str(rank) + " , aborting..."
+			if len(alive) <= can_fail + 1:
+				print "greater than F nodes failed"
+				comm.Abort()
+			alive.remove(int(lis[4]))
+			if message[3] == 0: i = i + 10	#manya
+			else: i = i + 2
+			continue
+
 		if rank == int(lis[4]):
 
+			#failure before card insertion
 			if lis[1] == 'f':
 				print "failure in node " + str(rank) + " , aborting..."
-				comm.Abort()
+				if len(alive) <= can_fail:
+					print "greater than F nodes failed"
+					comm.Abort()
+				alive.remove(int(lis[4]))
+				if message[3] == 0: i = i + 10	#manya
+				else: i = i + 2
+				continue
+				#comm.Abort()	# WHY???
 			if i + 1 < past + 2 + num_queries:
 				lis1 = content[i + 1].split()
 				# if debitting and userid and timestamp are same.
-				if lis[1] == 'd' and lis1[0] == lis[0] and lis1[3] == lis[3]:
+				if lis[1] == 'd' and lis1[1] == 'd' and lis1[0] == lis[0] and lis1[3] == lis[3]:
 					val = int(lis[2]) + int(lis1[2])
 					flag = 1
 					if val <= bank[lis[0]]:
