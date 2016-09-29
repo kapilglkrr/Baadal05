@@ -1,0 +1,17 @@
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/TermDfTermInfoArray.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/PairW.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/TermInfo.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/FileInfoArray.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/LongArrayListW.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/TermInfoArray.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/TermOffsets.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/TextIntWC.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/PairWC.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/package-info.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/QueryHandler.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/Retrieval.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/KeyCount.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/FileInfo.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/BuildInvertedIndex.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/TextPairWC.java
+/home/hduser/Baadal05/hadoop/inverted-index-hadoop/src/main/java/cc/nlplab/Query.java
