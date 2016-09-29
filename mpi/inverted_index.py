@@ -1,10 +1,10 @@
 from mpi4py import MPI
 import os
 import sys
-import numpy as np
 import nltk
 import math
 import pickle
+from pymongo import MongoClient
 data = []
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -28,31 +28,35 @@ def send_filenames(src):
 
 # this function returns a list of tokenized and stemmed words of any text
 def tokenize_list(doc_text):
-    tokens = nltk.tokenize.RegexpTokenizer(r'\w+').tokenize(doc_text)
-	# filtered_words = [word for word in tokens if word not in nltk.corpus.stopwords.words('english')]
-    tokens = [i.lower() for i in tokens]
-    porter = nltk.stem.PorterStemmer()
-    return [porter.stem(i) for i in tokens]
+	tokens = nltk.tokenize.RegexpTokenizer(r'\w+').tokenize(doc_text)
+	tokens = [word for word in tokens if word not in nltk.corpus.stopwords.words('english')]
+	tokens = [i.lower() for i in tokens]
+	tokens = [i.decode('utf-8', 'ignore').encode("utf-8") for i in tokens]
+	porter = nltk.stem.PorterStemmer()
+	return [porter.stem(i) for i in tokens]
 
-# save/load pickle modules...
-'''
-def save_obj(obj, name ):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
-def load_obj(name ):
-    with open('obj/' + name + '.pkl', 'rb') as f:
-        return pickle.load(f)
-'''
+def store_db():
+	print 'storing in database at rank = ' + str(rank)
+	client = MongoClient()
+	db = client['inv_index' + str(rank)]
+	word_col = db.word_col
+	for key, value in index.iteritems():
+		post = {'word': key, 'word_dict': value}
+		try:
+			word_col.insert_one(post)
+		except:
+			pass
 
+	print 'processing completed at rank = ' + str(rank)
+# for normal dataset..
 # process files and store data in inverted index.
 def process_files(src, files):
+	count = len(files)
+	done = 0
 	for file in files:
 		doc_name = src + '/' + file
 		words = tokenize_list(open(doc_name).read())
-		# if file == 'doc0000':
-		# 	print words
-		# gives the index of the current word.
 		fptr = 0
 		for word in words:
 			word_dict = index[word] if word in index else {}
@@ -61,10 +65,10 @@ def process_files(src, files):
 			word_dict[file] = location_list
 			index[word] = word_dict
 			fptr += len(word)
+		done = done + 1
+		print file + ' processed,' + str(done) + ' / ' + str(count) + ' done at rank = ' + str(rank)
 
-	with open("index" + str(rank), "wb") as filename:
-		pickle.dump(index, filename)
-
+	store_db()
 
 if __name__ == "__main__":
 	files = []
@@ -75,6 +79,6 @@ if __name__ == "__main__":
 		files = send_filenames(sys.argv[1])
 	else:
 		files = comm.recv(source = 0)
-
+	print 'filenames sent.'
 	process_files(sys.argv[1], files)
 

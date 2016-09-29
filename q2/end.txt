@@ -1,1 +1,12 @@
 if more than 2 debits are happening at once.
+
+In Two-Phase Commit, as in any asynchronous algorithm, process failure
+and restart is easy to handle. Each process records its current state in
+stable storage before sending any message while in that state. For example,
+upon receipt of a Prepared message, the TM records in stable storage that
+it has entered the preparing state and then sends the Prepare messages.
+When a failed process is restarted, it can simply restore its state from stable
+storage and continue executing the algorithm. Process failure and restart is
+equivalent to the process pausing, which is permitted by an asynchronous
+algorithm. Section 6.4 discusses in more detail what happens when a process
+fails and restarts in our transaction commit protocols.
