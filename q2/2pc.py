@@ -39,12 +39,9 @@ if __name__ == "__main__":
 			if i + 1 < past + 2 + num_queries:
 				lis1 = content[i + 1].split()
 				# if debitting and userid and timestamp are same.
-<<<<<<< HEAD
 				if lis[1] == 'd' and lis1[1] == 'd' and lis1[0] == lis[0] and lis1[3] == lis[3]:
-=======
 				if lis[1] == 'd' and lis1[0] == lis[0]\
 						 and lis1[3] == lis[3]:
->>>>>>> 0736662677ea92a867ca3d2be491a9d90c625631
 					val = int(lis[2]) + int(lis1[2])
 					flag = 1
 					if val <= bank[lis[0]]:
