@@ -1,24 +1,57 @@
-package cc.nlplab;
+package cloud;
 
 import java.util.ArrayList;
+
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.Text;
+
+import cloud.LongListW;
 // import org.apache.hadoop.io.Text;
-import lombok.*;
+
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import cc.nlplab.LongArrayListW;
 
+public class WordInfo implements Writable {
+    public WordInfo() {
+		super();
+	}
 
-@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
-@EqualsAndHashCode
-@NoArgsConstructor
-public class TermInfo implements Writable {
-    @NonNull @Getter @Setter private String fileName;
-    @NonNull @Getter @Setter private int tf;
-    @NonNull @Getter @Setter private LongArrayListW offsets;
+	public String getFileName() {
+		return fileName;
+	}
+
+	public WordInfo(String fileName, int tf, LongListW offsets) {
+		super();
+		this.fileName = fileName;
+		this.tf = tf;
+		this.offsets = offsets;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public int getTf() {
+		return tf;
+	}
+
+	public void setTf(int tf) {
+		this.tf = tf;
+	}
+
+	public LongListW getOffsets() {
+		return offsets;
+	}
+
+	public void setOffsets(LongListW offsets) {
+		this.offsets = offsets;
+	}
+	private String fileName;
+    private int tf;
+    private LongListW offsets;
 
     @Override
     public void readFields(DataInput in) throws IOException {
@@ -32,7 +65,7 @@ public class TermInfo implements Writable {
         //   offsets.add(in.readLong());
         // }
         if (offsets == null)
-            offsets = new LongArrayListW();
+            offsets = new LongListW();
         offsets.readFields(in);
     }
 

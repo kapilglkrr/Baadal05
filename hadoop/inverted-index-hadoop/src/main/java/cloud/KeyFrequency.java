@@ -1,11 +1,7 @@
-package cc.nlplab;
+package cloud;
 
 import java.lang.reflect.*;
 
-
-// import lombok.Data;
-// import lombok.AllArgsConstructor;
-import lombok.*;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.WritableComparable;
@@ -15,16 +11,17 @@ import java.io.IOException;
 import java.lang.String;
 
 
+public class KeyFrequency  implements WritableComparable {
+    private Text key;
+    private IntWritable count;
 
-@EqualsAndHashCode
-@NoArgsConstructor
-@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
-public class KeyCount  implements WritableComparable {
-    @Getter @Setter @NonNull private Text key;
-    @Getter @Setter @NonNull private IntWritable count;
-
-    public int compareTo(Object object) {
-        KeyCount ip2 = (KeyCount) object;
+    public KeyFrequency(Text key, IntWritable count) {
+		super();
+		this.key = key;
+		this.count = count;
+	}
+	public int compareTo(Object object) {
+        KeyFrequency ip2 = (KeyFrequency) object;
         int cmp = getKey().compareTo(ip2.getKey());
         if (cmp != 0)
             return cmp;
@@ -48,6 +45,18 @@ public class KeyCount  implements WritableComparable {
     public String toString() {
         return "(" + this.getKey() + ", " + this.getCount() + ")";
     }
+	public Text getKey() {
+		return key;
+	}
+	public void setKey(Text key) {
+		this.key = key;
+	}
+	public IntWritable getCount() {
+		return count;
+	}
+	public void setCount(IntWritable count) {
+		this.count = count;
+	}
 }
 
 

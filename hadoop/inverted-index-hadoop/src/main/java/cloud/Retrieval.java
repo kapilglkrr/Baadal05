@@ -1,4 +1,4 @@
-package cc.nlplab;
+package cloud;
 
 // import java.io.IOException;
 import java.io.*;
@@ -25,8 +25,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.log4j.Logger;
-
 public class Retrieval  extends Configured implements Tool {
     public static final int N = 44;
 
@@ -34,94 +32,93 @@ public class Retrieval  extends Configured implements Tool {
         return tf * Math.log(N / df);
     }
 
+    public static ArrayList<String> Query2list(final String query) {
+
+        ArrayList<String> queryHashTable = new ArrayList<String>();
+        for (String term : query.split(" +(AND +|OR +)?-?")) {
+            queryHashTable.add(term);
+        }
+        return queryHashTable;
+    }
+    
     public static HashMap<String, Integer> parseQuery(final String query) {
 
-        HashMap<String, Integer> queryMap = new HashMap<String, Integer>();
+        HashMap<String, Integer> queryHashTable = new HashMap<String, Integer>();
 
         int index = 0;
         for (String term : query.split(" +(AND +|OR +)?-?")) {
-            queryMap.put(term, index++);
+            queryHashTable.put(term, index++);
         }
 
-        return queryMap;
+        return queryHashTable;
     }
-    public static ArrayList<String> Query2list(final String query) {
+    
 
-        ArrayList<String> queryMap = new ArrayList<String>();
-        for (String term : query.split(" +(AND +|OR +)?-?")) {
-            queryMap.add(term);
-        }
-        return queryMap;
-    }
-
-    public static class FilterQueryMapper
-        extends Mapper<TextIntWC, TermInfoArray,
-        NullWritable, TermDfTermInfoArray> {
+    public static class FilterqueryHashTableper
+        extends Mapper<WordIntC, WordInfoList,
+        NullWritable, WordDfWordInfoList> {
         private static String query;
-        private static HashMap<String, Integer> queryMap;
-        private Logger log = Logger.getLogger(FilterQueryMapper.class);
+        private static HashMap<String, Integer> queryHashTable;
 
         @Override
         protected final void setup(final Mapper.Context context)
             throws IOException, InterruptedException {
             Configuration conf = context.getConfiguration();
             query = conf.get("query");
-            queryMap = parseQuery(query);
+            queryHashTable = parseQuery(query);
         }
 
-        public final void map(TextIntWC termDf, TermInfoArray termInfos
+        public final void map(WordIntC termDf, WordInfoList termInfos
                         , Context context)
             throws IOException, InterruptedException {
             String termString = termDf.getFirst().toString();
             int df = termDf.getSecond().get();
-            if (queryMap.containsKey(termString))
-                context.write(NullWritable.get(), new TermDfTermInfoArray( termString, df, termInfos));
+            if (queryHashTable.containsKey(termString))
+                context.write(NullWritable.get(), new WordDfWordInfoList( termString, df, termInfos));
         }
     }
 
 
-    public static class RetrievalReducer extends Reducer<NullWritable, TermDfTermInfoArray, NullWritable, FileInfoArray> {
+    public static class RetrievalReducer extends Reducer<NullWritable, WordDfWordInfoList, NullWritable, DocInfoList> {
         private static String query;
-        private static HashMap<String, Integer> queryMap ;
-        Logger log = Logger.getLogger(RetrievalReducer.class);
+        private static HashMap<String, Integer> queryHashTable ;
 
         protected void setup(Reducer.Context context) throws IOException, InterruptedException {
             Configuration conf = context.getConfiguration();
             query = conf.get("query");
-            queryMap = parseQuery(query);
+            queryHashTable = parseQuery(query);
         }
 
-        public void reduce (NullWritable none, Iterable<TermDfTermInfoArray> termDfTermInfos_iter, Context context) throws IOException, InterruptedException {
-            QueryHandler queryhandler = new QueryHandler();
+        public void reduce (NullWritable none, Iterable<WordDfWordInfoList> termDfTermInfos_iter, Context context) throws IOException, InterruptedException {
+            ResultHandler resultshandler = new ResultHandler();
 
-            for (TermDfTermInfoArray termDfTermInfos: termDfTermInfos_iter ) {
+            for (WordDfWordInfoList termDfTermInfos: termDfTermInfos_iter ) {
                 String term = termDfTermInfos.getTerm();
                 int df = termDfTermInfos.getDf();
                 ArrayWritable termInfos = termDfTermInfos.getTermInfos();
 
-                ArrayList<FileInfo> fileInfos = new ArrayList<FileInfo>();
+                ArrayList<DocInfo> fileInfos = new ArrayList<DocInfo>();
 
                 for (Writable entry : termInfos.get()) {
-                    TermInfo termInfo = (TermInfo) entry;
+                    WordInfo termInfo = (WordInfo) entry;
                     String fileName = termInfo.getFileName();
                     int tf = termInfo.getTf();
-                    LongArrayListW offsets = termInfo.getOffsets();
+                    LongListW offsets = termInfo.getOffsets();
 
-                    ArrayList<TermOffsets> termOffsets = new ArrayList<TermOffsets>();
-                    termOffsets.add(new TermOffsets(term, offsets));
-                    fileInfos.add(new FileInfo(fileName, (tfIdf(tf, df)),  termOffsets));
+                    ArrayList<WordPositions> termOffsets = new ArrayList<WordPositions>();
+                    termOffsets.add(new WordPositions(term, offsets));
+                    fileInfos.add(new DocInfo(fileName, (tfIdf(tf, df)),  termOffsets));
                 }
 
-                queryhandler.putFileInfoArray(term, new FileInfoArray(fileInfos));
+                resultshandler.putFileInfoArray(term, new DocInfoList(fileInfos));
             }
             System.out.println("Start parsing: " + query );
-            FileInfoArray output = queryhandler.parser.parse(query);
+            DocInfoList output = resultshandler.parser.parse(query);
             context.write(NullWritable.get(), output);
         }
 
     }
 
-    private final Logger log = Logger.getLogger(getClass());
     public int run(String[] args) throws Exception {
 
         Configuration conf = getConf();
@@ -144,14 +141,14 @@ public class Retrieval  extends Configured implements Tool {
         job.setInputFormatClass(SequenceFileInputFormat.class);
 
         // map
-        job.setMapperClass(FilterQueryMapper.class);
+        job.setMapperClass(FilterqueryHashTableper.class);
         job.setMapOutputKeyClass(NullWritable.class);
-        job.setMapOutputValueClass(TermDfTermInfoArray.class);
+        job.setMapOutputValueClass(WordDfWordInfoList.class);
 
         // reducer
         job.setReducerClass(RetrievalReducer.class);
         job.setOutputKeyClass(NullWritable.class);
-        job.setOutputValueClass(FileInfoArray.class);
+        job.setOutputValueClass(DocInfoList.class);
 
         job.setNumReduceTasks(1);
         // output
@@ -166,7 +163,7 @@ public class Retrieval  extends Configured implements Tool {
         // BufferedReader br=new BufferedReader(new InputStreamReader(fs.open(pt)));
 
 
-        FileInfoArray fInfos = new FileInfoArray();
+        DocInfoList fInfos = new DocInfoList();
 
         String query = args[2];
         ArrayList<String> qlist = Query2list(query);
@@ -174,10 +171,10 @@ public class Retrieval  extends Configured implements Tool {
         System.out.println("\n\n-------------------------------------------------\n\nResults");
         //System.out.println("Query size = "+qsize);
         while(reader.next(NullWritable.get(),  fInfos)) {
-            FileInfo [] fileInfos = (FileInfo [])fInfos.toArray();
+            DocInfo [] fileInfos = (DocInfo [])fInfos.toArray();
             Arrays.sort(fileInfos, Collections.reverseOrder());
             int i = 0;
-            for (FileInfo fileInfo : fileInfos) {
+            for (DocInfo fileInfo : fileInfos) {
                // System.out.println("--------------------------------"+fileInfo.getTermOffsets().size()+"------------------------------");
                 if(qsize == fileInfo.getTermOffsets().size())
                 {
@@ -185,7 +182,7 @@ public class Retrieval  extends Configured implements Tool {
                 	Boolean flag = false;
                 	String qterm = qlist.get(0);
                 	Long nextoffset;
-                	for (TermOffsets tmOfs: fileInfo.getTermOffsets())
+                	for (WordPositions tmOfs: fileInfo.getTermOffsets())
                 	{
                 		if(qterm.equals(tmOfs.getTerm()))
                 		{
@@ -199,11 +196,11 @@ public class Retrieval  extends Configured implements Tool {
                 					qterm = qlist.get(q);
                 					q++;
                 					//System.out.println("Searching for"+ qterm+" at "+nextoffset);
-                					for (TermOffsets tmOfs1: fileInfo.getTermOffsets())
+                					for (WordPositions tmOfs1: fileInfo.getTermOffsets())
                                 	{
                 						if(qterm.equals(tmOfs1.getTerm()))
                 						{
-                							//System.out.println(qterm+" found, now searching for offset");
+                							System.out.println(qterm+" found, now searching for offset");
                 							for (Long offset1: tmOfs1.getOffsets())
                                 			{
                 								//System.out.println("Offset is "+offset1+" and searching for "+nextoffset);
@@ -229,40 +226,6 @@ public class Retrieval  extends Configured implements Tool {
                 	}
                 	
                 }
-                	/*for (TermOffsets tmOfs: fileInfo.getTermOffsets()) {
-                    System.out.println( "#" + tmOfs.getTerm() );
-                    FSDataInputStream doc = fs.open(new Path(docPath, fileInfo.getFileName()));
-
-                    int j = 0;
-                    for (Long offset: tmOfs.getOffsets()) {
-                        if (j >= 5) break;
-                        long start ;
-                        long end;
-                        byte buffer[] = new byte[40];
-
-                        if(offset <= 20) {
-                            start = 0;
-                            end = 40;
-                            // mark_start = offset;
-                            // mark_end = offset + tmOfs.getTerm().length();
-                        } else {
-                            start = offset - 20;
-                            end = offset + 20;
-                            // pos = 20;
-                            // mark_end = 20 + tmOfs.getTerm().length();
-                        }
-
-
-                        doc.read(start, buffer, 0, 40);
-                        String sent = new String(Arrays.copyOfRange(buffer, 0, 20), "UTF-8").replaceAll("\n", " ")
-                        + "\033[1;32m" + tmOfs.getTerm() + "\033[0m"
-                        + new String(Arrays.copyOfRange(buffer, 20+tmOfs.getTerm().length(), 40), "UTF-8").replaceAll("\n", "  ");
-
-                        System.out.println( "     " + offset + ": " + sent);
-                        j++;
-                    }
-                    // System.out.println();
-                }*/
                 i++;
                 }
             }

@@ -1,17 +1,15 @@
-package cc.nlplab;
+package cloud;
 
-import cc.nlplab.PairWC;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
 
+import cloud.TupleC;
 
-
-
-public class TextIntWC extends PairWC<Text, IntWritable> {
-    public TextIntWC() {
+public class WordIntC extends TupleC<Text, IntWritable> {
+    public WordIntC() {
         super(Text.class, IntWritable.class);
     }
-    public TextIntWC(Text first, IntWritable second) {
+    public WordIntC(Text first, IntWritable second) {
         super(Text.class, IntWritable.class, first, second );
     }
 }

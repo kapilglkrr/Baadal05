@@ -1,21 +1,29 @@
-package cc.nlplab;
+package cloud;
 
 import java.util.ArrayList;
+
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.Text;
-// import org.apache.hadoop.io.Text;
-import lombok.*;
+
+import cloud.LongListW;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import cc.nlplab.LongArrayListW;
 
-@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
-@EqualsAndHashCode
-@NoArgsConstructor
-public class TermOffsets implements Writable {
-    @NonNull @Getter @Setter private String term;
-    @NonNull @Getter @Setter private LongArrayListW offsets;
+public class WordPositions implements Writable {
+    public WordPositions() {
+		super();
+	}
+
+	public WordPositions(String term, LongListW offsets) {
+		super();
+		this.term = term;
+		this.offsets = offsets;
+	}
+
+	private String term;
+     private LongListW offsets;
 
     @Override
     public void readFields(DataInput in) throws IOException {
@@ -23,7 +31,7 @@ public class TermOffsets implements Writable {
         tmText.readFields(in);
         this.term = tmText.toString();
         if (offsets == null)
-            offsets = new LongArrayListW();
+            offsets = new LongListW();
         offsets.readFields(in);
     }
 
@@ -32,14 +40,7 @@ public class TermOffsets implements Writable {
         new Text(this.term).write(out);
         offsets.write(out);
     }
-
-    // public int compareTo(TermOffsets other){
-    //   if (this.score > other.score)
-    //     return 1;
-    //   else if (this.score == other.score)
-    //     return 0;
-    //   else return -1;
-    // }
+    
     public String toString() {
         return "(tm=" + this.term + ", ofs=" + this.offsets + ")";
     }
@@ -49,6 +50,22 @@ public class TermOffsets implements Writable {
     		return true;
     	return false;
     }
+
+	public String getTerm() {
+		return term;
+	}
+
+	public void setTerm(String term) {
+		this.term = term;
+	}
+
+	public LongListW getOffsets() {
+		return offsets;
+	}
+
+	public void setOffsets(LongListW offsets) {
+		this.offsets = offsets;
+	}
 }
 
 

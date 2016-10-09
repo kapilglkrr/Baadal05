@@ -1,7 +1,8 @@
-package cc.nlplab;
+package cloud;
 import org.apache.hadoop.io.Writable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -9,10 +10,24 @@ import java.io.IOException;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.LongWritable;
 // import org.apache.hadoop.io.IntWritable;
-import cc.nlplab.TermInfo;
 
-public class LongArrayListW extends ArrayList<Long> implements Writable {
-    public void readFields(DataInput in) throws IOException {
+
+import cloud.WordInfo;
+
+public class LongListW extends ArrayList<Long> implements Writable {
+    public LongListW() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+	public LongListW(Collection<? extends Long> c) {
+		super(c);
+		// TODO Auto-generated constructor stub
+	}
+	public LongListW(int initialCapacity) {
+		super(initialCapacity);
+		// TODO Auto-generated constructor stub
+	}
+	public void readFields(DataInput in) throws IOException {
         clear();
         int size = in.readInt();
         for(int i = 0; i < size ; i++ ) {
